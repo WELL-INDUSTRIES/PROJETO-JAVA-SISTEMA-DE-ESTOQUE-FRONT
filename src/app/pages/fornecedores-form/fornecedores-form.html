@@ -1,0 +1,99 @@
+<section class="card">
+  <div class="card-header">
+    <div class="header-content">
+      <h2>{{ fornecedor.id ? 'Editar Fornecedor' : 'Novo Fornecedor' }}</h2>
+      <p class="subtitle">Cadastre ou edite as informações de contato do fornecedor.</p>
+    </div>
+    <button class="btn btn-secondary" type="button" (click)="voltar()">
+      <span class="material-icons">arrow_back</span> Voltar
+    </button>
+  </div>
+
+  <form (submit)="salvar()" class="form-container">
+    <div class="form-grid">
+      <div class="form-group full">
+        <label for="nome">Razão Social / Nome Fantasia *</label>
+        <input
+          id="nome"
+          type="text"
+          name="nome"
+          [(ngModel)]="fornecedor.nome"
+          placeholder="Ex: Tech Solutions Distribuidora LTDA"
+          required>
+      </div>
+
+      <div class="form-group">
+        <label for="telefone">Telefone de Contato *</label>
+        <input
+          id="telefone"
+          type="text"
+          name="telefone"
+          [(ngModel)]="fornecedor.telefone"
+          (input)="formatarTelefone($event)"
+          placeholder="(00) 00000-0000"
+          required>
+      </div>
+
+      <div class="form-group">
+        <label for="email">E-mail Corporativo</label>
+        <input
+          id="email"
+          type="email"
+          name="email"
+          [(ngModel)]="fornecedor.email"
+          placeholder="contato@empresa.com">
+      </div>
+
+      <div class="form-group">
+        <label for="status">Status da Conta</label>
+        <select id="status" name="ativo" [(ngModel)]="fornecedor.ativo">
+          <option [ngValue]="true">Ativo</option>
+          <option [ngValue]="false">Inativo</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="cidade">Cidade</label>
+        <input id="cidade" type="text" name="cidade" [(ngModel)]="fornecedor.cidade" placeholder="Cidade">
+      </div>
+
+      <div class="form-group">
+        <label for="uf">Estado (UF)</label>
+        <select id="uf" name="uf" [(ngModel)]="fornecedor.uf">
+          <option value="">Selecione</option>
+          <option *ngFor="let uf of ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']" [value]="uf">{{ uf }}</option>
+        </select>
+      </div>
+
+      <div class="form-group full">
+        <label for="endereco">Endereço Completo</label>
+        <input id="endereco" type="text" name="endereco" [(ngModel)]="fornecedor.endereco" placeholder="Rua, Número, Bairro, CEP">
+      </div>
+
+      <div class="form-group full">
+        <label for="observacoes">Observações Internas</label>
+        <textarea
+          id="observacoes"
+          name="observacoes"
+          [(ngModel)]="fornecedor.observacoes"
+          rows="3"
+          placeholder="Notas sobre prazos, condições de pagamento, etc."></textarea>
+      </div>
+    </div>
+
+    <div *ngIf="erroServidor" class="alert alert-danger">
+      <span class="material-icons">error</span> {{ erroServidor }}
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-secondary" type="button" (click)="voltar()" [disabled]="salvando">
+        Cancelar
+      </button>
+      <button class="btn btn-primary" type="submit" [disabled]="salvando">
+        <span class="material-icons" *ngIf="!salvando">save</span>
+        <span class="spinner-small" *ngIf="salvando"></span>
+        {{ salvando ? 'Salvando...' : 'Salvar Fornecedor' }}
+      </button>
+    </div>
+  </form>
+</section>

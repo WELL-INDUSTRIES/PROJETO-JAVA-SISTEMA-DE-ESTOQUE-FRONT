@@ -1,0 +1,83 @@
+<section class="card">
+  <div class="card-header">
+    <div class="header-content">
+      <span class="eyebrow">Produtos por Fornecedor</span>
+      <h2>{{ fornecedor?.nome || 'Fornecedor' }}</h2>
+      <p class="subtitle">Lista completa de mercadorias vinculadas a este parceiro.</p>
+    </div>
+    <button class="btn btn-secondary" type="button" (click)="voltar.emit()">
+      <span class="material-icons">arrow_back</span> Voltar
+    </button>
+  </div>
+
+  <div class="toolbar" *ngIf="fornecedor">
+    <div class="filters">
+      <div class="info-pill" *ngIf="fornecedor.telefone">
+        <span class="material-icons">phone</span> {{ fornecedor.telefone }}
+      </div>
+      <div class="info-pill" *ngIf="fornecedor.email">
+        <span class="material-icons">email</span> {{ fornecedor.email }}
+      </div>
+      <div class="info-pill" *ngIf="enderecoCompleto()">
+        <span class="material-icons">location_on</span> {{ enderecoCompleto() }}
+      </div>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Mercadoria</th>
+          <th>Categoria</th>
+          <th class="text-right">Quantidade</th>
+          <th class="text-right">Preço</th>
+          <th>Cadastro</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="carregando">
+          <td colspan="6" class="loading-cell">
+            <div class="spinner"></div>
+            Carregando mercadorias...
+          </td>
+        </tr>
+
+        <tr *ngIf="erro && !carregando">
+          <td colspan="6" class="empty-cell alert-danger">{{ erro }}</td>
+        </tr>
+
+        <tr *ngFor="let m of carregando ? [] : mercadorias">
+          <td>
+            <div class="product-info">
+              <span class="product-name">{{ m.nome || '-' }}</span>
+              <span class="product-desc">{{ m.descricao || 'Sem descrição' }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="badge badge-outline">{{ m.categoria || '-' }}</span>
+          </td>
+          <td class="text-right">{{ m.quantidade ?? 0 }}</td>
+          <td class="text-right">{{ m.preco | currency:'BRL':'symbol':'1.2-2' }}</td>
+          <td>{{ m.dataCadastro ? (m.dataCadastro | date:'dd/MM/yyyy') : '-' }}</td>
+          <td>
+            <span class="status-indicator" [ngClass]="estoqueClass(m)">
+              {{ statusEstoque(m) }}
+            </span>
+          </td>
+        </tr>
+
+        <tr *ngIf="!carregando && !erro && mercadorias.length === 0">
+          <td colspan="6" class="empty-cell">
+            Nenhuma mercadoria vinculada a este fornecedor.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="card-footer" *ngIf="!carregando && !erro">
+    Total de {{ mercadorias.length }} mercadoria(s) deste fornecedor
+  </div>
+</section>

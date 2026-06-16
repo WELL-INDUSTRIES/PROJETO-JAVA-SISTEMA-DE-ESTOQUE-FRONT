@@ -1,0 +1,167 @@
+<section class="card">
+  <div class="card-header">
+    <div class="header-content">
+      <h2>Mercadorias</h2>
+      <p class="subtitle">Gerenciamento de componentes e periféricos de TI.</p>
+    </div>
+    <button class="btn btn-primary" type="button" (click)="novo()">
+      <span class="material-icons">add</span> Nova Mercadoria
+    </button>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="toolbar">
+    <div class="search-container">
+      <span class="material-icons search-icon">search</span>
+      <input
+        type="text"
+        placeholder="Buscar por produto, descrição ou fornecedor..."
+        [(ngModel)]="filtroBusca"
+        (ngModelChange)="onFiltroChange()"
+        autocomplete="off">
+    </div>
+    <div class="filters">
+      <select [(ngModel)]="filtroCategoria" (ngModelChange)="onFiltroChange()" class="form-select">
+        <option value="">Todas as categorias</option>
+        <option *ngFor="let c of categorias" [value]="c">{{ c }}</option>
+      </select>
+      <select [(ngModel)]="filtroFornecedor" (ngModelChange)="onFiltroChange()" class="form-select">
+        <option value="">Todos os fornecedores</option>
+        <option *ngFor="let f of fornecedoresDisponiveis" [value]="f">{{ f }}</option>
+      </select>
+      <select [(ngModel)]="filtroStatus" (ngModelChange)="onFiltroChange()" class="form-select">
+        <option value="todos">Todos os status</option>
+        <option value="estoque">Em estoque</option>
+        <option value="baixo">Baixo estoque</option>
+      </select>
+      <button *ngIf="temFiltroAtivo" class="btn btn-text" type="button" (click)="limparFiltros()">
+        <span class="material-icons">close</span> Limpar
+      </button>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th><button class="sort-btn" type="button" (click)="ordenarPor('nome')">Produto <span class="material-icons">{{ sortIcon('nome') }}</span></button></th>
+          <th><button class="sort-btn" type="button" (click)="ordenarPor('categoria')">Categoria <span class="material-icons">{{ sortIcon('categoria') }}</span></button></th>
+          <th class="text-right"><button class="sort-btn" type="button" (click)="ordenarPor('quantidade')">Qtd. <span class="material-icons">{{ sortIcon('quantidade') }}</span></button></th>
+          <th class="text-right"><button class="sort-btn" type="button" (click)="ordenarPor('preco')">Preço <span class="material-icons">{{ sortIcon('preco') }}</span></button></th>
+          <th><button class="sort-btn" type="button" (click)="ordenarPor('fornecedor')">Fornecedor <span class="material-icons">{{ sortIcon('fornecedor') }}</span></button></th>
+          <th><button class="sort-btn" type="button" (click)="ordenarPor('dataCadastro')">Cadastro <span class="material-icons">{{ sortIcon('dataCadastro') }}</span></button></th>
+          <th><button class="sort-btn" type="button" (click)="ordenarPor('status')">Status <span class="material-icons">{{ sortIcon('status') }}</span></button></th>
+          <th class="text-center">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="carregando">
+          <td colspan="8" class="loading-cell">
+            <div class="spinner"></div>
+            Carregando mercadorias...
+          </td>
+        </tr>
+        <tr *ngFor="let m of carregando ? [] : mercadoriasExibidas; trackBy: trackById">
+          <td>
+            <div class="product-info">
+              <span class="product-name">{{ m.nome || '-' }}</span>
+              <span class="product-desc">{{ m.descricao || '' }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="badge badge-outline" *ngIf="m.categoria">{{ m.categoria }}</span>
+            <span *ngIf="!m.categoria">-</span>
+          </td>
+          <td class="text-right">{{ m.quantidade ?? 0 }}</td>
+          <td class="text-right">{{ m.preco | currency:'BRL':'symbol':'1.2-2' }}</td>
+          <td>{{ nomeFornecedor(m) || '-' }}</td>
+          <td>{{ m.dataCadastro ? (m.dataCadastro | date:'dd/MM/yyyy') : '-' }}</td>
+          <td>
+            <span class="status-indicator" [ngClass]="estoqueClass(m)">
+              {{ statusEstoque(m) }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn-icon" title="Ver detalhes" (click)="abrirDetalhes(m)">
+              <span class="material-icons">visibility</span>
+            </button>
+            <button class="btn-icon" title="Editar" (click)="editar(m)">
+              <span class="material-icons">edit</span>
+            </button>
+            <button class="btn-icon btn-danger" title="Excluir" (click)="excluir(m.id, m.nome || 'mercadoria')">
+              <span class="material-icons">delete</span>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="!carregando && mercadoriasExibidas.length === 0">
+          <td colspan="8" class="empty-cell">Nenhuma mercadoria encontrada.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="card-footer" *ngIf="!carregando">
+    Exibindo {{ mercadoriasExibidas.length }} de {{ mercadorias.length }} produtos
+  </div>
+</section>
+
+<!-- Modal detalhes -->
+<div class="modal-overlay" *ngIf="mercadoriaDetalhes as m" (click)="fecharDetalhes()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-content">
+        <span class="eyebrow">Detalhes do Produto</span>
+        <h3>{{ m.nome }}</h3>
+      </div>
+      <button class="btn-close" (click)="fecharDetalhes()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Status</label>
+          <span class="status-indicator" [ngClass]="estoqueClass(m)">{{ statusEstoque(m) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Data de Cadastro</label>
+          <span class="info-value">{{ m.dataCadastro ? (m.dataCadastro | date:'dd/MM/yyyy') : '-' }}</span>
+        </div>
+        <div class="info-item">
+          <label>Categoria</label>
+          <span class="info-value">{{ m.categoria || '-' }}</span>
+        </div>
+        <div class="info-item">
+          <label>Quantidade</label>
+          <span class="info-value">{{ m.quantidade ?? 0 }}</span>
+        </div>
+        <div class="info-item">
+          <label>Preço Unitário</label>
+          <span class="info-value">{{ m.preco | currency:'BRL':'symbol':'1.2-2' }}</span>
+        </div>
+        <div class="info-item">
+          <label>Fornecedor</label>
+          <span class="info-value">{{ nomeFornecedor(m) || '-' }}</span>
+        </div>
+        <div class="info-item full">
+          <label>Contato do Fornecedor</label>
+          <span class="info-value">{{ m.fornecedor?.telefone || '-' }} / {{ m.fornecedor?.email || '-' }}</span>
+        </div>
+        <div class="info-item full">
+          <label>Endereço</label>
+          <span class="info-value">{{ m.fornecedor?.endereco || '-' }}{{ m.fornecedor?.cidade ? ', ' + m.fornecedor?.cidade : '' }}{{ m.fornecedor?.uf ? '/' + m.fornecedor?.uf : '' }}</span>
+        </div>
+        <div class="info-item full">
+          <label>Descrição</label>
+          <p class="info-text">{{ m.descricao || 'Sem descrição cadastrada.' }}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="fecharDetalhes()">Fechar</button>
+      <button class="btn btn-primary" (click)="editar(m); fecharDetalhes()">Editar Produto</button>
+    </div>
+  </div>
+</div>

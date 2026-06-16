@@ -1,0 +1,141 @@
+<!-- TELA DE LOGIN -->
+<app-login
+  *ngIf="tela === 'login'"
+  (autenticado)="onAutenticado()">
+</app-login>
+
+<!-- SISTEMA PRINCIPAL -->
+<div *ngIf="tela === 'sistema'" class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="app-sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+       <img src="assets/iconecomfundo.webp" class="brand-icon" alt="Logo">
+        <div class="brand-text">
+          <h1>Well Industries</h1>
+          <span>Sistema de Estoque</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">Principal</div>
+      <button [class.active]="aba === 'mercadoria' || aba === 'mercadoria-form'" (click)="irParaMercadorias()" class="nav-item">
+        <span class="material-icons">inventory_2</span> Mercadorias
+      </button>
+      <button [class.active]="aba === 'fornecedor' || aba === 'fornecedor-form' || aba === 'mercadorias-fornecedor'" (click)="irParaFornecedores()" class="nav-item">
+        <span class="material-icons">business</span> Fornecedores
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <span class="material-icons">account_circle</span>
+        <div class="user-details">
+          <span class="user-name">Administrador</span>
+          <span class="user-role">Nível Total</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <div class="app-main">
+
+    <!-- TOPBAR -->
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <div class="breadcrumb">
+          <span class="breadcrumb-item">Sistema</span>
+          <span class="material-icons separator">chevron_right</span>
+          <span class="breadcrumb-item active">
+            {{ (aba === '' || aba === 'mercadoria' || aba === 'mercadoria-form') ? 'Mercadorias' : 
+               (aba === 'fornecedor' || aba === 'fornecedor-form') ? 'Fornecedores' : 
+               'Mercadorias do Fornecedor' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="action-dropdown">
+          <button class="btn btn-primary btn-sm" (click)="menuAberto = !menuAberto">
+            <span class="material-icons">add</span> Novo Registro
+          </button>
+          <div class="dropdown-menu" *ngIf="menuAberto">
+            <button (click)="novaMercadoria()"><span class="material-icons">inventory_2</span> Mercadoria</button>
+            <button (click)="novoFornecedor()"><span class="material-icons">business</span> Fornecedor</button>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <button class="btn-logout" (click)="sair()">
+          <span class="material-icons">logout</span> Sair
+        </button>
+      </div>
+    </header>
+
+    <main class="app-content">
+
+      <!-- TELA INICIAL -->
+      <div *ngIf="aba === ''" class="welcome-screen">
+        <div class="welcome-card">
+          <img src="assets/iconecomfundo.webp" class="welcome-icon" alt="Logo">
+          <h2>Bem-vindo ao Sistema de Estoque da Well Industries</h2>
+          <p>Selecione uma categoria no menu lateral para gerenciar.</p>
+          <div class="welcome-actions">
+            <button class="btn btn-outline" (click)="irParaMercadorias()">
+              <span class="material-icons">inventory_2</span> Ver Mercadorias
+            </button>
+            <button class="btn btn-outline" (click)="irParaFornecedores()">
+              <span class="material-icons">business</span> Ver Fornecedores
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LISTA DE MERCADORIAS -->
+      <div *ngIf="aba === 'mercadoria'">
+        <app-mercadorias-list
+          (novoCadastro)="novaMercadoria()"
+          (editarCadastro)="mercadoriaSelecionada = $event; aba = 'mercadoria-form'">
+        </app-mercadorias-list>
+      </div>
+
+      <!-- FORMULÁRIO DE MERCADORIA -->
+      <div *ngIf="aba === 'mercadoria-form'">
+        <app-mercadorias-form
+          [dados]="mercadoriaSelecionada"
+          (salvo)="onMercadoriaSalva()"
+          (cancelar)="onCancelarMercadoria()">
+        </app-mercadorias-form>
+      </div>
+
+      <!-- LISTA DE FORNECEDORES -->
+      <div *ngIf="aba === 'fornecedor'">
+        <app-fornecedores-list
+          (novoCadastro)="novoFornecedor()"
+          (editarCadastro)="fornecedorSelecionado = $event; aba = 'fornecedor-form'"
+          (verMercadorias)="onVerMercadoriasFornecedor($event)">
+        </app-fornecedores-list>
+      </div>
+
+      <!-- FORMULÁRIO DE FORNECEDOR -->
+      <div *ngIf="aba === 'fornecedor-form'">
+        <app-fornecedores-form
+          [dados]="fornecedorSelecionado"
+          (salvo)="onFornecedorSalvo()"
+          (cancelar)="onCancelarFornecedor()">
+        </app-fornecedores-form>
+      </div>
+
+      <!-- MERCADORIAS POR FORNECEDOR -->
+      <div *ngIf="aba === 'mercadorias-fornecedor'">
+        <app-mercadorias-fornecedor
+          [fornecedor]="fornecedorParaMercadorias"
+          (voltar)="onVoltarDeMercadoriasFornecedor()">
+        </app-mercadorias-fornecedor>
+      </div>
+
+    </main>
+  </div>
+</div>

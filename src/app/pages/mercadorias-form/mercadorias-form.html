@@ -1,0 +1,90 @@
+<section class="card">
+  <div class="card-header">
+    <div class="header-content">
+      <h2>{{ mercadoria.id ? 'Editar Mercadoria' : 'Nova Mercadoria' }}</h2>
+      <p class="subtitle">Preencha as informações técnicas do produto abaixo.</p>
+    </div>
+    <button class="btn btn-secondary" type="button" (click)="voltar()">
+      <span class="material-icons">arrow_back</span> Voltar
+    </button>
+  </div>
+
+  <form (submit)="salvar()" class="form-container">
+    <div class="form-grid">
+      <div class="form-group full">
+        <label for="nome">Nome do Produto *</label>
+        <input
+          id="nome"
+          type="text"
+          name="nome"
+          [(ngModel)]="mercadoria.nome"
+          placeholder="Ex: Processador Intel Core i7-13700K"
+          required>
+      </div>
+
+      <div class="form-group">
+        <label for="categoria">Categoria *</label>
+        <select id="categoria" name="categoria" [(ngModel)]="mercadoria.categoria" required>
+          <option value="">Selecione uma categoria</option>
+          <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="fornecedor">Fornecedor *</label>
+        <select id="fornecedor" name="fornecedorId" [(ngModel)]="mercadoria.fornecedorId" required>
+          <option [ngValue]="null">Selecione um fornecedor</option>
+          <option *ngFor="let f of fornecedores" [value]="f.id">{{ f.nome }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="quantidade">Quantidade em Estoque *</label>
+        <input
+          id="quantidade"
+          type="number"
+          name="quantidade"
+          [(ngModel)]="mercadoria.quantidade"
+          min="0"
+          required>
+      </div>
+
+      <div class="form-group">
+        <label for="preco">Preço Unitário (R$) *</label>
+        <input
+          id="preco"
+          type="number"
+          name="preco"
+          [(ngModel)]="mercadoria.preco"
+          step="0.01"
+          min="0"
+          required>
+      </div>
+
+      <div class="form-group full">
+        <label for="descricao">Descrição Técnica</label>
+        <textarea
+          id="descricao"
+          name="descricao"
+          [(ngModel)]="mercadoria.descricao"
+          rows="4"
+          placeholder="Especificações técnicas, modelo, número de série, etc."></textarea>
+      </div>
+    </div>
+
+    <div *ngIf="erroServidor" class="alert alert-danger">
+      <span class="material-icons">error</span> {{ erroServidor }}
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-secondary" type="button" (click)="voltar()" [disabled]="salvando">
+        Cancelar
+      </button>
+      <button class="btn btn-primary" type="submit" [disabled]="salvando">
+        <span class="material-icons" *ngIf="!salvando">save</span>
+        <span class="spinner-small" *ngIf="salvando"></span>
+        {{ salvando ? 'Salvando...' : 'Salvar Mercadoria' }}
+      </button>
+    </div>
+  </form>
+</section>

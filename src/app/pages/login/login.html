@@ -1,0 +1,62 @@
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-icon-container">
+        <img src="assets/iconecomfundo.webp" class="brand-icon" alt="Logo">
+      </div>
+      <h1>Well Industries</h1>
+      <p>Sistema de Estoque</p>
+    </div>
+
+    <form (submit)="$event.preventDefault(); entrar()" class="login-form">
+      <div class="form-group">
+        <label for="usuario">Usuário</label>
+        <div class="input-with-icon">
+          <span class="material-icons input-icon">person</span>
+          <input
+            id="usuario"
+            type="text"
+            name="usuario"
+            [(ngModel)]="usuario"
+            placeholder="Seu usuário"
+            autocomplete="username"
+            required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="senha">Senha</label>
+        <div class="input-with-icon">
+          <span class="material-icons input-icon">lock</span>
+          <input
+            id="senha"
+            type="password"
+            name="senha"
+            [(ngModel)]="senha"
+            placeholder="Sua senha"
+            autocomplete="current-password"
+            required>
+        </div>
+      </div>
+
+      <div class="alert alert-danger" *ngIf="erro">
+        <span class="material-icons">error_outline</span> {{ erro }}
+      </div>
+
+      <button
+        class="btn btn-primary btn-block"
+        type="submit"
+        [disabled]="carregando">
+        <span class="spinner-small" *ngIf="carregando"></span>
+        {{ carregando ? 'Autenticando...' : 'Acessar Sistema' }}
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <div class="login-hint">
+        <span class="material-icons">info</span>
+        Acesso restrito.
+      </div>
+    </div>
+  </div>
+</div>

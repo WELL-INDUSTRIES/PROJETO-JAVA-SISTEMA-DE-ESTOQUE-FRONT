@@ -1,0 +1,142 @@
+<section class="card">
+  <div class="card-header">
+    <div class="header-content">
+      <h2>Fornecedores</h2>
+      <p class="subtitle">Gerenciamento de fornecedores de hardware e serviços.</p>
+    </div>
+    <button class="btn btn-primary" type="button" (click)="novo()">
+      <span class="material-icons">add</span> Novo Fornecedor
+    </button>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="toolbar">
+    <div class="search-container">
+      <span class="material-icons search-icon">search</span>
+      <input
+        type="text"
+        placeholder="Buscar por nome, email ou cidade..."
+        [(ngModel)]="filtroBusca"
+        (ngModelChange)="onFiltroChange()"
+        autocomplete="off">
+    </div>
+    <div class="filters">
+      <select [(ngModel)]="filtroCidade" (ngModelChange)="onFiltroChange()" class="form-select">
+        <option value="">Todas as cidades</option>
+        <option *ngFor="let c of cidades" [value]="c">{{ c }}</option>
+      </select>
+      <select [(ngModel)]="filtroUF" (ngModelChange)="onFiltroChange()" class="form-select">
+        <option value="">Todos os estados</option>
+        <option *ngFor="let u of ufs" [value]="u">{{ u }}</option>
+      </select>
+      <button *ngIf="temFiltroAtivo" class="btn btn-text" type="button" (click)="limparFiltros()">
+        <span class="material-icons">close</span> Limpar
+      </button>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th><button class="sort-btn" type="button" (click)="ordenarPor('nome')">Fornecedor <span class="material-icons">{{ sortIcon('nome') }}</span></button></th>
+          <th><button class="sort-btn" type="button" (click)="ordenarPor('contato')">Contato <span class="material-icons">{{ sortIcon('contato') }}</span></button></th>
+          <th><button class="sort-btn" type="button" (click)="ordenarPor('localizacao')">Localização <span class="material-icons">{{ sortIcon('localizacao') }}</span></button></th>
+          <th><button class="sort-btn" type="button" (click)="ordenarPor('status')">Status <span class="material-icons">{{ sortIcon('status') }}</span></button></th>
+          <th class="text-center">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="carregando">
+          <td colspan="5" class="loading-cell">
+            <div class="spinner"></div>
+            Carregando fornecedores...
+          </td>
+        </tr>
+        <tr *ngFor="let f of carregando ? [] : fornecedoresExibidos; trackBy: trackById">
+          <td>
+            <div class="product-info">
+              <span class="product-name">{{ f.nome || '-' }}</span>
+              <span class="product-desc">{{ f.telefone || 'Sem telefone' }}</span>
+            </div>
+          </td>
+          <td>{{ f.email || '-' }}</td>
+          <td>{{ f.cidade || '-' }} / {{ f.uf || '-' }}</td>
+          <td>
+            <span class="status-indicator" [ngClass]="f.ativo !== false ? 'status-success' : 'status-danger'">
+              {{ f.ativo !== false ? 'Ativo' : 'Inativo' }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn-icon" title="Ver produtos" (click)="verProdutos(f)">
+              <span class="material-icons">inventory_2</span>
+            </button>
+            <button class="btn-icon" title="Ver detalhes" (click)="abrirDetalhes(f)">
+              <span class="material-icons">visibility</span>
+            </button>
+            <button class="btn-icon" title="Editar" (click)="editar(f)">
+              <span class="material-icons">edit</span>
+            </button>
+            <button class="btn-icon btn-danger" title="Excluir" (click)="excluir(f.id, f.nome || 'fornecedor')">
+              <span class="material-icons">delete</span>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="!carregando && fornecedoresExibidos.length === 0">
+          <td colspan="5" class="empty-cell">Nenhum fornecedor encontrado.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="card-footer" *ngIf="!carregando">
+    Exibindo {{ fornecedoresExibidos.length }} de {{ fornecedores.length }} fornecedores
+  </div>
+</section>
+
+<!-- Modal detalhes -->
+<div class="modal-overlay" *ngIf="fornecedorDetalhes as f" (click)="fecharDetalhes()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-content">
+        <span class="eyebrow">Detalhes do Fornecedor</span>
+        <h3>{{ f.nome }}</h3>
+      </div>
+      <button class="btn-close" (click)="fecharDetalhes()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Status</label>
+          <span class="status-indicator" [ngClass]="f.ativo !== false ? 'status-success' : 'status-danger'">
+            {{ f.ativo !== false ? 'Ativo' : 'Inativo' }}
+          </span>
+        </div>
+        <div class="info-item">
+          <label>Telefone</label>
+          <span class="info-value">{{ f.telefone || '-' }}</span>
+        </div>
+        <div class="info-item">
+          <label>E-mail</label>
+          <span class="info-value">{{ f.email || '-' }}</span>
+        </div>
+        <div class="info-item">
+          <label>Cidade/UF</label>
+          <span class="info-value">{{ f.cidade || '-' }} / {{ f.uf || '-' }}</span>
+        </div>
+        <div class="info-item full">
+          <label>Endereço Completo</label>
+          <span class="info-value">{{ f.endereco || '-' }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="fecharDetalhes()">Fechar</button>
+      <button class="btn btn-primary" (click)="verProdutos(f)">Ver Mercadorias</button>
+    </div>
+  </div>
+</div>
