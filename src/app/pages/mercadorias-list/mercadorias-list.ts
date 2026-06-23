@@ -15,6 +15,7 @@ interface MercadoriaItem {
   quantidade?: number;
   preco?: number;
   dataCadastro?: string;
+  ativo?: boolean;
   fornecedor?: { id?: number; nome?: string; telefone?: string; email?: string; endereco?: string; cidade?: string; uf?: string; };
 }
 
@@ -34,6 +35,7 @@ export class MercadoriasList implements OnInit {
   mercadoriasExibidas: MercadoriaItem[] = [];
   mercadoriaDetalhes: MercadoriaItem | null = null;
   carregando = true;
+  mostrandoInativos = false;
 
   filtroBusca = '';
   filtroCategoria = '';
@@ -42,8 +44,14 @@ export class MercadoriasList implements OnInit {
 
   categorias: string[] = [];
   fornecedoresDisponiveis: string[] = [];
+  itensPorPaginaOpcoes = [10, 25, 50, 100];
+  itensPorPagina = 10;
+  paginaAtual = 1;
+  totalItensFiltrados = 0;
+  quantidadesAtualizando = new Set<number>();
 
   private cargaAtual = 0;
+  private readonly itensPorPaginaStorageKey = 'mercadoriasItensPorPagina';
 
   sortState: SortState<Col> = { column: 'nome', direction: 'asc' };
 
@@ -59,18 +67,27 @@ export class MercadoriasList implements OnInit {
 
   constructor(private service: MercadoriaService) {}
 
-  ngOnInit() { this.carregar(); }
+  ngOnInit() {
+    this.itensPorPagina = this.carregarItensPorPagina();
+    this.carregar();
+  }
 
   carregar() {
     const cargaId = ++this.cargaAtual;
     this.carregando = true;
 
-    this.service.listar().subscribe({
-      next: (data: MercadoriaItem[]) => {
+    const request = this.mostrandoInativos
+      ? this.service.listarInativos(this.paginaAtual - 1, this.itensPorPagina)
+      : this.service.listar(this.paginaAtual - 1, this.itensPorPagina);
+
+    request.subscribe({
+      next: (pageData: any) => {
+        const data = pageData.content;
         if (cargaId !== this.cargaAtual) return;
         this.mercadorias = data;
-        this.categorias = [...new Set(data.map(m => m.categoria).filter((c): c is string => !!c))].sort();
-        this.fornecedoresDisponiveis = [...new Set(data.map(m => m.fornecedor?.nome).filter((n): n is string => !!n))].sort();
+        this.categorias = [...new Set(data.map((m: MercadoriaItem) => m.categoria).filter((c: any): c is string => !!c))].sort() as string[];
+        this.fornecedoresDisponiveis = [...new Set(data.map((m: MercadoriaItem) => m.fornecedor?.nome).filter((n: any): n is string => !!n))].sort() as string[];
+        this.totalItensFiltrados = pageData.totalElements;
         this.atualizarExibidas();
         this.carregando = false;
       },
@@ -83,7 +100,9 @@ export class MercadoriasList implements OnInit {
     });
   }
 
-  atualizarExibidas() {
+  atualizarExibidas(resetPagina = false) {
+    if (resetPagina) this.paginaAtual = 1;
+
     const busca = this.filtroBusca.trim().toLowerCase();
 
     const filtrados = this.mercadorias.filter(m => {
@@ -102,17 +121,20 @@ export class MercadoriasList implements OnInit {
       return matchBusca && matchCat && matchForn && matchStatus;
     });
 
-    this.mercadoriasExibidas = sortItems(filtrados, this.sortState, this.sortConfig);
+    const ordenados = sortItems(filtrados, this.sortState, this.sortConfig);
+    this.ajustarPaginaAtual();
+
+    this.mercadoriasExibidas = ordenados;
   }
 
-  onFiltroChange() { this.atualizarExibidas(); }
+  onFiltroChange() { this.atualizarExibidas(true); }
 
   limparFiltros() {
     this.filtroBusca = '';
     this.filtroCategoria = '';
     this.filtroFornecedor = '';
     this.filtroStatus = 'todos';
-    this.atualizarExibidas();
+    this.atualizarExibidas(true);
   }
 
   get temFiltroAtivo(): boolean {
@@ -135,6 +157,13 @@ export class MercadoriasList implements OnInit {
   abrirDetalhes(m: MercadoriaItem) { this.mercadoriaDetalhes = m; }
   fecharDetalhes() { this.mercadoriaDetalhes = null; }
 
+  alternarInativos() {
+    this.mostrandoInativos = !this.mostrandoInativos;
+    this.fecharDetalhes();
+    this.limparFiltros();
+    this.carregar();
+  }
+
   excluir(id?: number, nome?: string) {
     if (!id) return;
     if (!confirm(`Deseja realmente excluir "${nome}"?`)) return;
@@ -144,9 +173,64 @@ export class MercadoriasList implements OnInit {
     });
   }
 
+  reativar(id?: number) {
+    if (!id) return;
+    this.service.reativar(id).subscribe({
+      next: () => { this.fecharDetalhes(); this.carregar(); },
+      error: () => alert('Erro ao reativar mercadoria.'),
+    });
+  }
+
+  alterarQuantidade(m: MercadoriaItem, delta: number) {
+    if (!m.id || this.mostrandoInativos || this.quantidadesAtualizando.has(m.id)) return;
+
+    const novaQuantidade = Math.max(0, (m.quantidade ?? 0) + delta);
+    if (novaQuantidade === (m.quantidade ?? 0)) return;
+
+    this.quantidadesAtualizando.add(m.id);
+    this.service.atualizarQuantidade(m.id, m, novaQuantidade).subscribe({
+      next: (atualizada: MercadoriaItem) => {
+        m.quantidade = atualizada?.quantidade ?? novaQuantidade;
+        this.atualizarExibidas();
+      },
+      error: () => {
+        this.quantidadesAtualizando.delete(m.id!);
+        alert('Erro ao atualizar quantidade.');
+      },
+      complete: () => this.quantidadesAtualizando.delete(m.id!),
+    });
+  }
+
+  quantidadeAtualizando(m: MercadoriaItem): boolean {
+    return !!m.id && this.quantidadesAtualizando.has(m.id);
+  }
+
+  alterarItensPorPagina(valor: number) {
+    this.itensPorPagina = Number(valor) || 10;
+    localStorage.setItem(this.itensPorPaginaStorageKey, String(this.itensPorPagina));
+    this.atualizarExibidas(true);
+  }
+
+  paginaAnterior() {
+    if (this.paginaAtual <= 1) return;
+    this.paginaAtual--;
+    this.atualizarExibidas();
+  }
+
+  proximaPagina() {
+    if (this.paginaAtual >= this.totalPaginas) return;
+    this.paginaAtual++;
+    this.atualizarExibidas();
+  }
+
+  get totalPaginas(): number {
+    return Math.max(1, Math.ceil(this.totalItensFiltrados / this.itensPorPagina));
+  }
+
   nomeFornecedor(m: MercadoriaItem): string { return m.fornecedor?.nome ?? ''; }
 
   statusEstoque(m: MercadoriaItem): string {
+    if (this.mostrandoInativos || m.ativo === false) return 'Inativo';
     const q = m.quantidade ?? 0;
     if (q === 0) return 'Sem estoque';
     if (q <= 5) return 'Baixo estoque';
@@ -154,6 +238,7 @@ export class MercadoriasList implements OnInit {
   }
 
   estoqueClass(m: MercadoriaItem): string {
+    if (this.mostrandoInativos || m.ativo === false) return 'status-danger';
     const q = m.quantidade ?? 0;
     if (q === 0) return 'status-danger';
     if (q <= 5) return 'status-warning';
@@ -165,5 +250,15 @@ export class MercadoriasList implements OnInit {
     if (q === 0) return 2;
     if (q <= 5) return 1;
     return 0;
+  }
+
+  private carregarItensPorPagina(): number {
+    const salvo = Number(localStorage.getItem(this.itensPorPaginaStorageKey));
+    return this.itensPorPaginaOpcoes.includes(salvo) ? salvo : 10;
+  }
+
+  private ajustarPaginaAtual() {
+    if (this.paginaAtual > this.totalPaginas) this.paginaAtual = this.totalPaginas;
+    if (this.paginaAtual < 1) this.paginaAtual = 1;
   }
 }

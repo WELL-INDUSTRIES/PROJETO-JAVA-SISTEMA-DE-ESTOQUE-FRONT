@@ -11,8 +11,12 @@ export class FornecedorService {
 
   constructor(private http: HttpClient) {}
 
-  listar(): Observable<any[]> {
-    return this.http.get<any[]>(this.api);
+  listar(page: number, size: number): Observable<any> {
+    return this.http.get<any>(`${this.api}?page=${page}&size=${size}`);
+  }
+
+  listarInativos(page: number, size: number): Observable<any> {
+    return this.http.get<any>(`${this.api}/inativos?page=${page}&size=${size}`);
   }
 
   criar(fornecedor: any): Observable<any> {
@@ -25,6 +29,10 @@ export class FornecedorService {
 
   deletar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.api}/${id}`);
+  }
+
+  reativar(id: number): Observable<any> {
+    return this.http.patch<any>(`${this.api}/${id}/reativar`, {});
   }
 
   listarMercadoriasDoFornecedor(id: number): Observable<any[]> {

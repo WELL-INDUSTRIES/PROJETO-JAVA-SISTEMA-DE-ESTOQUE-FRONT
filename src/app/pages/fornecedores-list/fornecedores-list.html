@@ -4,9 +4,15 @@
       <h2>Fornecedores</h2>
       <p class="subtitle">Gerenciamento de fornecedores de hardware e serviços.</p>
     </div>
-    <button class="btn btn-primary" type="button" (click)="novo()">
-      <span class="material-icons">add</span> Novo Fornecedor
-    </button>
+    <div class="filters">
+      <button class="btn btn-outline" type="button" (click)="alternarInativos()">
+        <span class="material-icons">{{ mostrandoInativos ? 'business' : 'restore' }}</span>
+        {{ mostrandoInativos ? 'Ver Ativos' : 'Ver Inativos' }}
+      </button>
+      <button class="btn btn-primary" type="button" (click)="novo()" *ngIf="!mostrandoInativos">
+        <span class="material-icons">add</span> Novo Fornecedor
+      </button>
+    </div>
   </div>
 
   <!-- FILTROS -->
@@ -68,18 +74,25 @@
             </span>
           </td>
           <td class="actions">
-            <button class="btn-icon" title="Ver produtos" (click)="verProdutos(f)">
-              <span class="material-icons">inventory_2</span>
-            </button>
-            <button class="btn-icon" title="Ver detalhes" (click)="abrirDetalhes(f)">
-              <span class="material-icons">visibility</span>
-            </button>
-            <button class="btn-icon" title="Editar" (click)="editar(f)">
-              <span class="material-icons">edit</span>
-            </button>
-            <button class="btn-icon btn-danger" title="Excluir" (click)="excluir(f.id, f.nome || 'fornecedor')">
-              <span class="material-icons">delete</span>
-            </button>
+            <ng-container *ngIf="mostrandoInativos; else acoesAtivasFornecedor">
+              <button class="btn-icon" title="Reativar" (click)="reativar(f.id)">
+                <span class="material-icons">restore</span>
+              </button>
+            </ng-container>
+            <ng-template #acoesAtivasFornecedor>
+              <button class="btn-icon" title="Ver produtos" (click)="verProdutos(f)">
+                <span class="material-icons">inventory_2</span>
+              </button>
+              <button class="btn-icon" title="Ver detalhes" (click)="abrirDetalhes(f)">
+                <span class="material-icons">visibility</span>
+              </button>
+              <button class="btn-icon" title="Editar" (click)="editar(f)">
+                <span class="material-icons">edit</span>
+              </button>
+              <button class="btn-icon btn-danger" title="Excluir" (click)="excluir(f.id, f.nome || 'fornecedor')">
+                <span class="material-icons">delete</span>
+              </button>
+            </ng-template>
           </td>
         </tr>
         <tr *ngIf="!carregando && fornecedoresExibidos.length === 0">
@@ -90,7 +103,22 @@
   </div>
   
   <div class="card-footer" *ngIf="!carregando">
-    Exibindo {{ fornecedoresExibidos.length }} de {{ fornecedores.length }} fornecedores
+    <span>Exibindo {{ fornecedoresExibidos.length }} de {{ totalItensFiltrados }} itens totais</span>
+    <div class="filters">
+      <label>
+        Itens por pagina
+        <select [(ngModel)]="itensPorPagina" (ngModelChange)="alterarItensPorPagina($event)" class="form-select">
+          <option *ngFor="let opcao of itensPorPaginaOpcoes" [ngValue]="opcao">{{ opcao }}</option>
+        </select>
+      </label>
+      <button class="btn btn-secondary btn-sm" type="button" [disabled]="paginaAtual <= 1" (click)="paginaAnterior()">
+        <span class="material-icons">chevron_left</span>
+      </button>
+      <span>Pagina {{ paginaAtual }} de {{ totalPaginas }}</span>
+      <button class="btn btn-secondary btn-sm" type="button" [disabled]="paginaAtual >= totalPaginas" (click)="proximaPagina()">
+        <span class="material-icons">chevron_right</span>
+      </button>
+    </div>
   </div>
 </section>
 

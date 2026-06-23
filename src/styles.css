@@ -365,7 +365,7 @@ body {
 .btn-icon {
   width: 32px;
   height: 32px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   background: none;
@@ -374,6 +374,35 @@ body {
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
+  vertical-align: middle;
+}
+
+.btn-quantity {
+  width: 24px;
+  height: 24px;
+  background-color: #f1f5f9;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0;
+}
+
+.btn-quantity:hover:not(:disabled) {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.btn-quantity .material-icons {
+  font-size: 16px;
+}
+
+.quantity-display {
+  display: inline-block;
+  min-width: 24px;
+  text-align: center;
+  font-weight: 600;
+  margin: 0 4px;
+  vertical-align: middle;
 }
 
 .btn-icon:hover {
@@ -512,10 +541,12 @@ body {
 }
 
 .badge {
-  padding: 3px 8px;
+  padding: 3px 10px;
   border-radius: 99px;
   font-size: 11px;
   font-weight: 600;
+  white-space: nowrap;
+  display: inline-block;
 }
 
 .badge-outline {

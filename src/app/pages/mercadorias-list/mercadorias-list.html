@@ -4,9 +4,15 @@
       <h2>Mercadorias</h2>
       <p class="subtitle">Gerenciamento de componentes e periféricos de TI.</p>
     </div>
-    <button class="btn btn-primary" type="button" (click)="novo()">
-      <span class="material-icons">add</span> Nova Mercadoria
-    </button>
+    <div class="filters">
+      <button class="btn btn-outline" type="button" (click)="alternarInativos()">
+        <span class="material-icons">{{ mostrandoInativos ? 'inventory_2' : 'restore' }}</span>
+        {{ mostrandoInativos ? 'Ver Ativos' : 'Ver Inativos' }}
+      </button>
+      <button class="btn btn-primary" type="button" (click)="novo()" *ngIf="!mostrandoInativos">
+        <span class="material-icons">add</span> Nova Mercadoria
+      </button>
+    </div>
   </div>
 
   <!-- FILTROS -->
@@ -72,7 +78,27 @@
             <span class="badge badge-outline" *ngIf="m.categoria">{{ m.categoria }}</span>
             <span *ngIf="!m.categoria">-</span>
           </td>
-          <td class="text-right">{{ m.quantidade ?? 0 }}</td>
+          <td class="text-right">
+            <div style="display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+              <button
+                class="btn-icon btn-quantity"
+                type="button"
+                title="Diminuir quantidade"
+                [disabled]="mostrandoInativos || quantidadeAtualizando(m) || (m.quantidade ?? 0) <= 0"
+                (click)="alterarQuantidade(m, -1)">
+                <span class="material-icons">remove</span>
+              </button>
+              <span class="quantity-display">{{ m.quantidade ?? 0 }}</span>
+              <button
+                class="btn-icon btn-quantity"
+                type="button"
+                title="Aumentar quantidade"
+                [disabled]="mostrandoInativos || quantidadeAtualizando(m)"
+                (click)="alterarQuantidade(m, 1)">
+                <span class="material-icons">add</span>
+              </button>
+            </div>
+          </td>
           <td class="text-right">{{ m.preco | currency:'BRL':'symbol':'1.2-2' }}</td>
           <td>{{ nomeFornecedor(m) || '-' }}</td>
           <td>{{ m.dataCadastro ? (m.dataCadastro | date:'dd/MM/yyyy') : '-' }}</td>
@@ -82,15 +108,22 @@
             </span>
           </td>
           <td class="actions">
-            <button class="btn-icon" title="Ver detalhes" (click)="abrirDetalhes(m)">
-              <span class="material-icons">visibility</span>
-            </button>
-            <button class="btn-icon" title="Editar" (click)="editar(m)">
-              <span class="material-icons">edit</span>
-            </button>
-            <button class="btn-icon btn-danger" title="Excluir" (click)="excluir(m.id, m.nome || 'mercadoria')">
-              <span class="material-icons">delete</span>
-            </button>
+            <ng-container *ngIf="mostrandoInativos; else acoesAtivasMercadoria">
+              <button class="btn-icon" title="Reativar" (click)="reativar(m.id)">
+                <span class="material-icons">restore</span>
+              </button>
+            </ng-container>
+            <ng-template #acoesAtivasMercadoria>
+              <button class="btn-icon" title="Ver detalhes" (click)="abrirDetalhes(m)">
+                <span class="material-icons">visibility</span>
+              </button>
+              <button class="btn-icon" title="Editar" (click)="editar(m)">
+                <span class="material-icons">edit</span>
+              </button>
+              <button class="btn-icon btn-danger" title="Excluir" (click)="excluir(m.id, m.nome || 'mercadoria')">
+                <span class="material-icons">delete</span>
+              </button>
+            </ng-template>
           </td>
         </tr>
         <tr *ngIf="!carregando && mercadoriasExibidas.length === 0">
@@ -101,7 +134,22 @@
   </div>
   
   <div class="card-footer" *ngIf="!carregando">
-    Exibindo {{ mercadoriasExibidas.length }} de {{ mercadorias.length }} produtos
+    <span>Exibindo {{ mercadoriasExibidas.length }} de {{ totalItensFiltrados }} itens totais</span>
+    <div class="filters">
+      <label>
+        Itens por pagina
+        <select [(ngModel)]="itensPorPagina" (ngModelChange)="alterarItensPorPagina($event)" class="form-select">
+          <option *ngFor="let opcao of itensPorPaginaOpcoes" [ngValue]="opcao">{{ opcao }}</option>
+        </select>
+      </label>
+      <button class="btn btn-secondary btn-sm" type="button" [disabled]="paginaAtual <= 1" (click)="paginaAnterior()">
+        <span class="material-icons">chevron_left</span>
+      </button>
+      <span>Pagina {{ paginaAtual }} de {{ totalPaginas }}</span>
+      <button class="btn btn-secondary btn-sm" type="button" [disabled]="paginaAtual >= totalPaginas" (click)="proximaPagina()">
+        <span class="material-icons">chevron_right</span>
+      </button>
+    </div>
   </div>
 </section>
 

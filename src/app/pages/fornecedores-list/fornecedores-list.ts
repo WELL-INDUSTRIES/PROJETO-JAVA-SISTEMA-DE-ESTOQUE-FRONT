@@ -35,6 +35,7 @@ export class FornecedoresList implements OnInit {
   fornecedoresExibidos: FornecedorItem[] = [];
   fornecedorDetalhes: FornecedorItem | null = null;
   carregando = true;
+  mostrandoInativos = false;
 
   filtroBusca = '';
   filtroCidade = '';
@@ -42,8 +43,13 @@ export class FornecedoresList implements OnInit {
 
   cidades: string[] = [];
   ufs: string[] = [];
+  itensPorPaginaOpcoes = [10, 25, 50, 100];
+  itensPorPagina = 10;
+  paginaAtual = 1;
+  totalItensFiltrados = 0;
 
   private cargaAtual = 0;
+  private readonly itensPorPaginaStorageKey = 'fornecedoresItensPorPagina';
 
   sortState: SortState<Col> = { column: 'nome', direction: 'asc' };
 
@@ -56,18 +62,27 @@ export class FornecedoresList implements OnInit {
 
   constructor(private service: FornecedorService) {}
 
-  ngOnInit() { this.carregar(); }
+  ngOnInit() {
+    this.itensPorPagina = this.carregarItensPorPagina();
+    this.carregar();
+  }
 
   carregar() {
     const cargaId = ++this.cargaAtual;
     this.carregando = true;
 
-    this.service.listar().subscribe({
-      next: (data: FornecedorItem[]) => {
+    const request = this.mostrandoInativos
+      ? this.service.listarInativos(this.paginaAtual - 1, this.itensPorPagina)
+      : this.service.listar(this.paginaAtual - 1, this.itensPorPagina);
+
+    request.subscribe({
+      next: (pageData: any) => {
+        const data = pageData.content;
         if (cargaId !== this.cargaAtual) return;
         this.fornecedores = data;
-        this.cidades = [...new Set(data.map(f => f.cidade).filter((c): c is string => !!c))].sort();
-        this.ufs = [...new Set(data.map(f => f.uf).filter((u): u is string => !!u))].sort();
+        this.totalItensFiltrados = pageData.totalElements;
+        this.cidades = [...new Set(pageData.content.map((f: FornecedorItem) => f.cidade).filter((c: any): c is string => !!c))].sort() as string[];
+        this.ufs = [...new Set(pageData.content.map((f: FornecedorItem) => f.uf).filter((u: any): u is string => !!u))].sort() as string[];
         this.atualizarExibidos();
         this.carregando = false;
       },
@@ -80,7 +95,9 @@ export class FornecedoresList implements OnInit {
     });
   }
 
-  atualizarExibidos() {
+  atualizarExibidos(resetPagina = false) {
+    if (resetPagina) this.paginaAtual = 1;
+
     const busca = this.filtroBusca.trim().toLowerCase();
 
     const filtrados = this.fornecedores.filter(f => {
@@ -94,16 +111,21 @@ export class FornecedoresList implements OnInit {
       return matchBusca && matchCidade && matchUF;
     });
 
-    this.fornecedoresExibidos = sortItems(filtrados, this.sortState, this.sortConfig);
+    const ordenados = sortItems(filtrados, this.sortState, this.sortConfig);
+    this.ajustarPaginaAtual();
+
+    // A paginação já é feita pelo backend, então 'fornecedores' já contém apenas os itens da página atual.
+    // Aplicamos apenas a ordenação e filtros locais (busca, cidade, UF) sobre essa página.
+    this.fornecedoresExibidos = ordenados;
   }
 
-  onFiltroChange() { this.atualizarExibidos(); }
+  onFiltroChange() { this.atualizarExibidos(true); }
 
   limparFiltros() {
     this.filtroBusca = '';
     this.filtroCidade = '';
     this.filtroUF = '';
-    this.atualizarExibidos();
+    this.atualizarExibidos(true);
   }
 
   get temFiltroAtivo(): boolean {
@@ -127,6 +149,13 @@ export class FornecedoresList implements OnInit {
   abrirDetalhes(f: FornecedorItem) { this.fornecedorDetalhes = f; }
   fecharDetalhes() { this.fornecedorDetalhes = null; }
 
+  alternarInativos() {
+    this.mostrandoInativos = !this.mostrandoInativos;
+    this.fecharDetalhes();
+    this.limparFiltros();
+    this.carregar();
+  }
+
   excluir(id?: number, nome?: string) {
     if (!id) return;
     if (!confirm(`Deseja realmente excluir o fornecedor "${nome}"?`)) return;
@@ -134,5 +163,45 @@ export class FornecedoresList implements OnInit {
       next: () => { this.fecharDetalhes(); this.carregar(); },
       error: () => alert('Erro ao excluir fornecedor.'),
     });
+  }
+
+  reativar(id?: number) {
+    if (!id) return;
+    this.service.reativar(id).subscribe({
+      next: () => { this.fecharDetalhes(); this.carregar(); },
+      error: () => alert('Erro ao reativar fornecedor.'),
+    });
+  }
+
+  alterarItensPorPagina(valor: number) {
+    this.itensPorPagina = Number(valor) || 10;
+    localStorage.setItem(this.itensPorPaginaStorageKey, String(this.itensPorPagina));
+    this.atualizarExibidos(true);
+  }
+
+  paginaAnterior() {
+    if (this.paginaAtual <= 1) return;
+    this.paginaAtual--;
+    this.atualizarExibidos();
+  }
+
+  proximaPagina() {
+    if (this.paginaAtual >= this.totalPaginas) return;
+    this.paginaAtual++;
+    this.atualizarExibidos();
+  }
+
+  get totalPaginas(): number {
+    return Math.max(1, Math.ceil(this.totalItensFiltrados / this.itensPorPagina));
+  }
+
+  private carregarItensPorPagina(): number {
+    const salvo = Number(localStorage.getItem(this.itensPorPaginaStorageKey));
+    return this.itensPorPaginaOpcoes.includes(salvo) ? salvo : 10;
+  }
+
+  private ajustarPaginaAtual() {
+    if (this.paginaAtual > this.totalPaginas) this.paginaAtual = this.totalPaginas;
+    if (this.paginaAtual < 1) this.paginaAtual = 1;
   }
 }

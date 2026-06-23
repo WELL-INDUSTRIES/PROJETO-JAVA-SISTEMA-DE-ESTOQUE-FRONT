@@ -69,7 +69,9 @@ export class MercadoriasForm implements OnInit {
       };
     }
 
-    this.fornecedorService.listar().subscribe({
+    // No formulário, listamos todos os fornecedores ativos para seleção, sem paginação específica
+    // Usamos page 0 e um size grande para buscar todos.
+    this.fornecedorService.listar(0, 1000).subscribe({
       next: (data: any[]) => {
         this.fornecedores = data.filter((f: any) => f.ativo !== false);
       },
