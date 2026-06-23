@@ -72,7 +72,9 @@ export class MercadoriasForm implements OnInit {
     // No formulário, listamos todos os fornecedores ativos para seleção, sem paginação específica
     // Usamos page 0 e um size grande para buscar todos.
     this.fornecedorService.listar(0, 1000).subscribe({
-      next: (data: any[]) => {
+      next: (pageData: any) => {
+        // Como o serviço agora retorna um objeto Page, precisamos pegar o .content
+        const data = pageData.content || [];
         this.fornecedores = data.filter((f: any) => f.ativo !== false);
       },
       error: () => alert('Erro ao carregar fornecedores.'),

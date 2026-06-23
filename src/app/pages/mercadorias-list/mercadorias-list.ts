@@ -166,10 +166,10 @@ export class MercadoriasList implements OnInit {
 
   excluir(id?: number, nome?: string) {
     if (!id) return;
-    if (!confirm(`Deseja realmente excluir "${nome}"?`)) return;
+    if (!confirm(`Deseja realmente desativar o produto "${nome}"?`)) return;
     this.service.deletar(id).subscribe({
       next: () => { this.fecharDetalhes(); this.carregar(); },
-      error: () => alert('Erro ao excluir mercadoria.'),
+      error: () => alert('Erro ao desativar mercadoria.'),
     });
   }
 
@@ -208,19 +208,20 @@ export class MercadoriasList implements OnInit {
   alterarItensPorPagina(valor: number) {
     this.itensPorPagina = Number(valor) || 10;
     localStorage.setItem(this.itensPorPaginaStorageKey, String(this.itensPorPagina));
-    this.atualizarExibidas(true);
+    this.paginaAtual = 1;
+    this.carregar();
   }
 
   paginaAnterior() {
     if (this.paginaAtual <= 1) return;
     this.paginaAtual--;
-    this.atualizarExibidas();
+    this.carregar();
   }
 
   proximaPagina() {
     if (this.paginaAtual >= this.totalPaginas) return;
     this.paginaAtual++;
-    this.atualizarExibidas();
+    this.carregar();
   }
 
   get totalPaginas(): number {

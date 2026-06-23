@@ -158,10 +158,10 @@ export class FornecedoresList implements OnInit {
 
   excluir(id?: number, nome?: string) {
     if (!id) return;
-    if (!confirm(`Deseja realmente excluir o fornecedor "${nome}"?`)) return;
+    if (!confirm(`Deseja realmente desativar o fornecedor "${nome}"?`)) return;
     this.service.deletar(id).subscribe({
       next: () => { this.fecharDetalhes(); this.carregar(); },
-      error: () => alert('Erro ao excluir fornecedor.'),
+      error: () => alert('Erro ao desativar fornecedor.'),
     });
   }
 
@@ -176,19 +176,20 @@ export class FornecedoresList implements OnInit {
   alterarItensPorPagina(valor: number) {
     this.itensPorPagina = Number(valor) || 10;
     localStorage.setItem(this.itensPorPaginaStorageKey, String(this.itensPorPagina));
-    this.atualizarExibidos(true);
+    this.paginaAtual = 1;
+    this.carregar();
   }
 
   paginaAnterior() {
     if (this.paginaAtual <= 1) return;
     this.paginaAtual--;
-    this.atualizarExibidos();
+    this.carregar();
   }
 
   proximaPagina() {
     if (this.paginaAtual >= this.totalPaginas) return;
     this.paginaAtual++;
-    this.atualizarExibidos();
+    this.carregar();
   }
 
   get totalPaginas(): number {
