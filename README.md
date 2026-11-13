@@ -1,87 +1,28 @@
-# TechStock - Controle de Estoque (Frontend)
+# TechStock | Interface de estoque
 
-Sistema web para gerenciamento de estoque de componentes eletrônicos e periféricos de TI.
+Aplicação web da WELL-INDUSTRIES para consultar mercadorias, atualizar quantidades e gerenciar fornecedores. As telas usam Angular 21, TypeScript e serviços HTTP para acessar a [API em Spring Boot](https://github.com/WELL-INDUSTRIES/SISTEMA-DE-ESTOQUE-WELL-INDUSTRIES-BACK).
 
-## 🚀 Instalação e Execução
+## Fluxos disponíveis
 
-### Pré-requisitos
-- Node.js 18+
-- npm ou yarn
+- Cadastro, edição, desativação e reativação de fornecedores e mercadorias.
+- Consulta de mercadorias vinculadas a um fornecedor.
+- Listagens paginadas e formulários de manutenção de estoque.
 
-### Passos
+## Executar localmente
 
-1. **Instalar dependências**
-   ```bash
-   npm install
-   ```
+Inicie a API na porta 8080. Com Node.js 24 e npm, execute na raiz deste repositório:
 
-2. **Iniciar o servidor de desenvolvimento**
-   ```bash
-   npm start
-   ```
-   Ou com proxy configurado:
-   ```bash
-   npm run start:proxy
-   ```
-
-3. Abra o navegador em `http://localhost:4200`
-
-## 📋 Credenciais Padrão
-
-- **Usuário:** `admin`
-- **Senha:** `admin123`
-
-## 🏗️ Estrutura do Projeto
-
-```
-src/
-├── app/
-│   ├── pages/           # Componentes de página
-│   ├── services/        # Serviços HTTP
-│   ├── shared/          # Utilitários e estilos compartilhados
-│   └── app.*            # Componente raiz
-├── environments/        # Configurações por ambiente
-├── styles.css          # Estilos globais
-└── index.html          # Página HTML
+```sh
+npm ci
+npm run start:proxy
 ```
 
-## 🎯 Funcionalidades
+Abra http://localhost:4200. A tela de demonstração usa o usuário `admin` e a senha `admin123`. A sessão é simulada no navegador. O proxy de desenvolvimento encaminha as chamadas para a API.
 
-- ✅ Login com autenticação
-- ✅ CRUD de Mercadorias (com filtros avançados)
-- ✅ CRUD de Fornecedores (com filtros por cidade/estado)
-- ✅ Visualizar mercadorias por fornecedor
-- ✅ Ordenação de tabelas
-- ✅ Modais de detalhes
-- ✅ Validação de formulários
-- ✅ Interface responsiva e profissional
+## Build
 
-## 🔧 Configuração da API
-
-Edite `src/environments/environment.ts` para alterar a URL da API:
-
-```typescript
-export const environment = {
-  apiUrl: 'http://localhost:8080/api'
-};
-```
-
-## 📦 Build para Produção
-
-```bash
+```sh
 npm run build
 ```
 
-Os arquivos compilados estarão em `dist/controle-estoque-front`
-
-## 💻 Requisitos Atendidos
-
-- [x] Tela de login
-- [x] Lista de mercadorias com filtros (busca, categoria, fornecedor, status, validade)
-- [x] Adicionar, editar e excluir mercadorias
-- [x] Lista de fornecedores com filtros (busca, cidade, estado, status)
-- [x] Adicionar, editar e excluir fornecedores
-- [x] Exibir todas as mercadorias de um fornecedor específico
-- [x] Validação de dados
-- [x] Tratamento de erros
-- [x] Design profissional e responsivo
+O endereço usado pela versão compilada está em `src/environments/environment.ts`. Para hospedagem, o servidor precisa encaminhar o prefixo `/api` para as rotas correspondentes do backend.
