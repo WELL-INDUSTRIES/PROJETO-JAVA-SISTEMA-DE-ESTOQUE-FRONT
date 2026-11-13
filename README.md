@@ -1,6 +1,8 @@
-# TechStock | Interface de estoque
+# TechStock | CRUD de estoque em Angular
 
 Aplicação web da WELL-INDUSTRIES para consultar mercadorias, atualizar quantidades e gerenciar fornecedores. As telas usam Angular 21, TypeScript e serviços HTTP para acessar a [API em Spring Boot](https://github.com/WELL-INDUSTRIES/SISTEMA-DE-ESTOQUE-WELL-INDUSTRIES-BACK).
+
+O CRUD reúne cadastro, consulta, edição e exclusão lógica. Ao excluir um registro, ele fica inativo e pode ser reativado.
 
 ## Fluxos disponíveis
 
